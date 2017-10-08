@@ -16,7 +16,7 @@ from extension import db
 
 
 app = Flask(__name__)
-conf = configs.get('dev')
+conf = configs.get('prod')
 app.config.from_object(conf)
 
 app.register_blueprint(article.article, url_prefix='/article')

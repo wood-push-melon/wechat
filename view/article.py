@@ -6,10 +6,8 @@
     copyright: (c) 2017 Beijing ShiJingShan Government. All Rights Reserved
 """
 
-
 from flask import request, jsonify, Blueprint
 
-# from model.article import Article
 from model import Article
 
 
@@ -26,27 +24,35 @@ def get_article(article_id):
                 title=article.title,
                 url=article.url,
                 page=article.page,
-                body=article.body,
-                images=[i.url for i in article.images])
+                body=article.html.replace('\\n', '\n').replace('\\"', '"'),
+                images=[i.url for i in article.images],
+                num_img=len(article.images))
 
     return jsonify(code=0, data=resp)
 
 
 @article.route('/list', methods=['GET'])
 def get_article_list():
-    """ return list of news """
+    """ return list of articles """
 
-    top = request.args.get('top', 5)
+    args = request.args
+    page = int(args.get('page', 0))
+    size = int(args.get('size', 10))
+    category = args.get('key', '')
 
-    news = Article.query.filter(
-        Article.category == 'news'
-    ).order_by(Article.modify_timestamp.desc()).limit(top)
+    if category:
+        articles = Article.query.filter(
+            Article.category == category
+        ).order_by(Article.modify_timestamp.desc())
+    else:
+        articles = Article.query.order_by(
+            Article.modify_timestamp.desc()).offset(page*size).limit(size)
 
     resp = [dict(id=n.id,
                  title=n.title,
                  url=n.url,
-                 page=n.page,
-                 images=[i.url for i in n.images if i.location == 'out'])
-            for n in news]
+                 images=[i.url for i in n.images if i.location == 'out'],
+                 num_img=len(n.images))
+            for n in articles]
 
     return jsonify(code=0, data=resp)
